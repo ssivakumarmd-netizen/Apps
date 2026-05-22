@@ -18,3 +18,12 @@ val SurfaceSlate = Color(0xFF151C2C) // Soft slate card surfaces
 val AccentSteel = Color(0xFF324159)  // Accent/border steel color
 val SoftAlertYellow = Color(0xFFFAA805) // Muted warm alert gold
 
+// High Density Theme Color Tokens
+val HighDensityBg = Color(0xFFF3F4F9)
+val HighDensityCardBg = Color(0xFFDDE1FF)
+val HighDensityPrimary = Color(0xFF004A77)
+val HighDensityPillBgGreen = Color(0xFFBAF0B3)
+val HighDensityPillTextGreen = Color(0xFF14532D)
+val HighDensityPillBgRed = Color(0xFFFEE2E2)
+val HighDensityPillTextRed = Color(0xFF991B1B)
+

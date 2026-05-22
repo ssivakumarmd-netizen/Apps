@@ -34,10 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.BorderStroke
 import com.example.data.PriceAlert
 import com.example.data.StockHolding
-import com.example.ui.theme.StockGreen
-import com.example.ui.theme.StockRed
+import com.example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -73,19 +73,30 @@ fun StockDashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.TrendingUp,
-                            contentDescription = "Stock Logo",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShowChart,
+                                contentDescription = "Stock Logo",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Stock Portfolio & Alerts",
+                            text = "MarketWatch",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 21.sp,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 },
@@ -195,7 +206,11 @@ fun StockDashboardScreen(
             }
 
             // Top Portfolio Metric Summary Section
-            PortfolioMetricsCard(summary = summary, isAutoSimulating = isAutoSimulating)
+            PortfolioMetricsCard(
+                summary = summary,
+                isAutoSimulating = isAutoSimulating,
+                alertsCount = alerts.size
+            )
 
             // Direct simulation control toolbar
             SimulationControllerRow(
@@ -211,41 +226,54 @@ fun StockDashboardScreen(
                 }
             )
 
-            // Section Splitter - Custom Tabs
-            Spacer(modifier = Modifier.height(4.dp))
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 16.dp)
+            // Bottom Rounded sheet style content container from High Density design specs
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp
             ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.PieChart, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("My Holdings (${holdings.size})", fontWeight = FontWeight.Bold)
-                        }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 16.dp)
+                ) {
+                    TabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        Tab(
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0 },
+                            text = { 
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.PieChart, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("My Holdings (${holdings.size})", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        )
+                        Tab(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            text = { 
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Alert Rules (${alerts.size})", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        )
                     }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Alert Rules (${alerts.size})", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            // Scrollable Content
-            Box(modifier = Modifier.weight(1f)) {
+                    // Scrollable Content
+                    Box(modifier = Modifier.weight(1f)) {
                 if (selectedTab == 0) {
                     if (holdings.isEmpty()) {
                         EmptyStateView(
@@ -291,6 +319,8 @@ fun StockDashboardScreen(
                     }
                 }
             }
+                }
+            }
         }
 
         // Add Holding Form Dialog
@@ -334,139 +364,168 @@ fun StockDashboardScreen(
     }
 }
 
+// Dynamic avatar style helper based on design specifications
+@Composable
+fun getStockAvatarColors(symbol: String): Pair<Color, Color> {
+    return when (symbol.uppercase()) {
+        "AAPL" -> Pair(Color(0xFF0F172A), Color.White) // Dark Slate
+        "TSLA" -> Pair(Color(0xFFDDE1FF), Color(0xFF001D35)) // Light Lavender / Navy
+        "NVDA" -> Pair(Color(0xFFBAF0B3), Color(0xFF14532D)) // Emerald Green / Dark Green
+        "GOOG" -> Pair(Color(0xFFFEF3C7), Color(0xFF78350F)) // Warm Gold / Amber
+        "MSFT" -> Pair(Color(0xFFCFFAFE), Color(0xFF0891B2)) // Cyan / Teal
+        else -> Pair(Color(0xFFE2E8F0), Color(0xFF334155)) // Neutral Gray
+    }
+}
+
 // Portfolio metrics block
 @Composable
 fun PortfolioMetricsCard(
     summary: PortfolioSummary,
-    isAutoSimulating: Boolean
+    isAutoSimulating: Boolean,
+    alertsCount: Int
 ) {
     val isPositive = summary.totalProfitLoss >= 0
-    val pnlColor = if (isPositive) StockGreen else StockRed
+    val pnlColor = if (isPositive) HighDensityPillTextGreen else HighDensityPillTextRed
+    val pnlBg = if (isPositive) HighDensityPillBgGreen else HighDensityPillBgRed
     val pnlSign = if (isPositive) "+" else ""
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .shadow(12.dp, shape = RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .shadow(2.dp, shape = RoundedCornerShape(28.dp)),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = HighDensityCardBg
         )
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
-                        )
-                    )
-                )
-                .padding(20.dp)
+                .fillMaxWidth()
+                .padding(24.dp)
         ) {
-            Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column {
+                    Text(
+                        text = "Total Balance",
+                        color = Color(0xFF334155), // Slate-700
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$${String.format("%,.2f", summary.totalCurrentValue)}",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontFamily = FontFamily.SansSerif,
+                        color = Color(0xFF0F172A), // Slate-900
+                        lineHeight = 32.sp
+                    )
+                }
+
+                // Dynamic gain pill from High Density spec
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(pnlBg)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isPositive) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                        contentDescription = null,
+                        tint = pnlColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "$pnlSign${String.format("%.2f", summary.totalProfitLossPercentage)}%",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = pnlColor
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Subcards row (glassmorphism overlay from HTML spec: bg-white/40 rounded-2xl p-3)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Day Gain Subcard
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.4f))
+                        .padding(12.dp)
                 ) {
                     Text(
-                        text = "PORTFOLIO VALUATION",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.sp
+                        text = "DAY GAIN / PNL",
+                        color = Color(0xFF475569),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
                     )
-                    
-                    // Simulating status badge
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(
-                                if (isAutoSimulating) StockGreen.copy(alpha = 0.15f)
-                                else Color.Gray.copy(alpha = 0.15f)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(6.dp),
-                            shape = CircleShape,
-                            color = if (isAutoSimulating) StockGreen else Color.Gray
-                        ) {}
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isAutoSimulating) "LIVE FEED ACTIVE" else "FEED PAUSED",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isAutoSimulating) StockGreen else Color.Gray
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$pnlSign$${String.format("%,.2f", summary.totalProfitLoss)}",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = pnlColor
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(10.dp))
-                
-                Text(
-                    text = "$${String.format("%,.2f", summary.totalCurrentValue)}",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontFamily = FontFamily.SansSerif,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
-                Spacer(modifier = Modifier.height(12.dp))
 
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "TOTAL INVESTMENT",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "$${String.format("%,.2f", summary.totalCostBasis)}",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        Text(
-                            text = "UNREALIZED P&L",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = if (isPositive) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = null,
-                                tint = pnlColor,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "$pnlSign$${String.format("%,.2f", summary.totalProfitLoss)}",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = pnlColor
-                            )
-                        }
-                        Text(
-                            text = "$pnlSign${String.format("%.2f", summary.totalProfitLossPercentage)}%",
-                            fontSize = 12.sp,
-                            color = pnlColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                // Active Alerts Subcard
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.4f))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = "ACTIVE ALERTS",
+                        color = Color(0xFF475569),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = String.format("%02d", alertsCount),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A)
+                    )
                 }
+            }
+
+            // Embedded live simulation indicator at bottom
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Surface(
+                    modifier = Modifier.size(6.dp),
+                    shape = CircleShape,
+                    color = if (isAutoSimulating) HighDensityPillTextGreen else Color.Gray
+                ) {}
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isAutoSimulating) "LIVE BROADCAST FEED ACTIVE" else "LIVE BROADCAST FEED SUSPENDED",
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isAutoSimulating) Color(0xFF1E293B) else Color(0xFF64748B)
+                )
             }
         }
     }
@@ -490,11 +549,10 @@ fun SimulationControllerRow(
         Button(
             onClick = onToggleSim,
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isAutoSimulating) MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-                else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                contentColor = if (isAutoSimulating) Color.Red else MaterialTheme.colorScheme.primary
+                containerColor = if (isAutoSimulating) Color(0xFFFEE2E2) else Color(0xFFE2E8F0),
+                contentColor = if (isAutoSimulating) Color(0xFF991B1B) else Color(0xFF334155)
             ),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.weight(1.2f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
@@ -515,10 +573,10 @@ fun SimulationControllerRow(
         Button(
             onClick = onTriggerVolatile,
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                containerColor = Color(0xFFE2E8F0),
+                contentColor = Color(0xFF334155)
             ),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
@@ -539,10 +597,10 @@ fun SimulationControllerRow(
         Button(
             onClick = onReset,
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                containerColor = Color(0xFFF1F5F9),
+                contentColor = Color(0xFF64748B)
             ),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.weight(0.8f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
@@ -555,7 +613,7 @@ fun SimulationControllerRow(
     }
 }
 
-// UI component for standard holdings item
+// UI component for standard holdings item (High Density styled)
 @Composable
 fun HoldingStockCard(
     holding: StockHolding,
@@ -565,65 +623,60 @@ fun HoldingStockCard(
     val isPositive = holding.profitLoss >= 0
     val stockColor = if (isPositive) StockGreen else StockRed
     val pnlSign = if (isPositive) "+" else ""
+    val (avatarBg, avatarText) = getStockAvatarColors(holding.symbol)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(2.dp, shape = RoundedCornerShape(14.dp)),
+            .shadow(1.dp, shape = RoundedCornerShape(16.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color(0xFFF8FAFC)
         ),
-        shape = RoundedCornerShape(14.dp),
-        border = CardDefaults.outlinedCardBorder()
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circle Logo Mockup
+            // Rounded corners Square Symbol Badge (from design HTML: w-12 h-12 bg-slate-900 rounded-xl)
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(avatarBg)
             ) {
                 Text(
-                    text = holding.symbol.take(3),
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    text = holding.symbol.take(4),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = avatarText
                 )
             }
 
             Spacer(modifier = Modifier.width(12.dp))
 
             // Text info
-            Column(modifier = Modifier.weight(1.2f)) {
-                Text(
-                    text = holding.symbol,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Column(modifier = Modifier.weight(1.3f)) {
                 Text(
                     text = holding.companyName,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color(0xFF0F172A),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                // Shares and Cost Basis info
                 Text(
-                    text = "${holding.shares} Shares @ \$${String.format("%.2f", holding.buyPrice)}",
+                    text = "${holding.shares} Shares · @\$${String.format("%.2f", holding.buyPrice)}",
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF64748B)
                 )
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
 
             // Current price simulator block
             Column(
@@ -631,15 +684,15 @@ fun HoldingStockCard(
                     .weight(1.1f)
                     .clickable { onEditPriceSelected() }
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .background(Color(0xFFF1F5F9))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "\$${String.format("%.2f", holding.currentPrice)}",
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color(0xFF0F172A)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -668,7 +721,7 @@ fun HoldingStockCard(
                 Text(
                     text = "$pnlSign$${String.format("%.2f", holding.profitLoss)}",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     color = stockColor
                 )
                 Text(
@@ -686,8 +739,8 @@ fun HoldingStockCard(
                     Icon(
                         Icons.Default.Delete,
                         contentDescription = "Delete Holding",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        modifier = Modifier.size(14.dp)
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(13.dp)
                     )
                 }
             }
@@ -695,7 +748,7 @@ fun HoldingStockCard(
     }
 }
 
-// UI element for Alert display card
+// UI element for Alert display card (High Density styled)
 @Composable
 fun AlertSettingsCard(
     alert: PriceAlert,
@@ -705,41 +758,37 @@ fun AlertSettingsCard(
 ) {
     val conditionText = if (alert.isAbove) "Goes Above" else "Goes Below"
     val isTriggered = alert.isTriggered
+    val (avatarBg, avatarText) = getStockAvatarColors(alert.symbol)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(1.dp, shape = RoundedCornerShape(12.dp)),
+            .shadow(1.dp, shape = RoundedCornerShape(16.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = if (isTriggered) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.surface
+            containerColor = if (isTriggered) Color(0xFFF1F5F9) else Color(0xFFF8FAFC)
         ),
-        shape = RoundedCornerShape(12.dp),
-        border = CardDefaults.outlinedCardBorder()
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Status Icon Indicators
+            // Rounded corners Square Symbol Badge
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isTriggered) StockGreen.copy(alpha = 0.1f)
-                        else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
-                    )
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(avatarBg)
             ) {
-                Icon(
-                    imageVector = if (isTriggered) Icons.Default.CheckCircle
-                    else Icons.Default.NotificationsActive,
-                    contentDescription = null,
-                    tint = if (isTriggered) StockGreen else MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = alert.symbol.take(4),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = avatarText
                 )
             }
 
@@ -750,15 +799,16 @@ fun AlertSettingsCard(
                     Text(
                         text = alert.symbol,
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        color = Color(0xFF0F172A)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (alert.isAbove) StockGreen.copy(alpha = 0.15f)
-                                else StockRed.copy(alpha = 0.15f)
+                                if (alert.isAbove) HighDensityPillBgGreen
+                                else HighDensityPillBgRed
                             )
                             .padding(horizontal = 4.dp, vertical = 2.dp)
                     ) {
@@ -766,7 +816,7 @@ fun AlertSettingsCard(
                             text = conditionText.uppercase(),
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (alert.isAbove) StockGreen else StockRed
+                            color = if (alert.isAbove) HighDensityPillTextGreen else HighDensityPillTextRed
                         )
                     }
                 }
@@ -775,14 +825,14 @@ fun AlertSettingsCard(
                     text = "Target: \$${String.format("%.2f", alert.targetPrice)}",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color(0xFF334155)
                 )
 
                 if (currentStockPrice != null) {
                     Text(
                         text = "Current: \$${String.format("%.2f", currentStockPrice)}",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color(0xFF64748B)
                     )
                 }
             }
@@ -795,9 +845,9 @@ fun AlertSettingsCard(
                 if (isTriggered) {
                     Text(
                         text = "TRIGGERED",
-                        color = StockGreen,
+                        color = HighDensityPillTextGreen,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
+                        fontSize = 10.sp
                     )
                     alert.triggeredAt?.let { time ->
                         val date = Date(time)
@@ -805,7 +855,7 @@ fun AlertSettingsCard(
                         Text(
                             text = "At ${format.format(date)}",
                             fontSize = 9.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color(0xFF64748B)
                         )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -824,9 +874,9 @@ fun AlertSettingsCard(
                 } else {
                     Text(
                         text = "ACTIVE",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color(0xFF64748B),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
+                        fontSize = 10.sp
                     )
                     Spacer(modifier = Modifier.height(14.dp))
                 }
@@ -842,7 +892,7 @@ fun AlertSettingsCard(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete Alert Rule",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    tint = Color(0xFF94A3B8),
                     modifier = Modifier.size(16.dp)
                 )
             }

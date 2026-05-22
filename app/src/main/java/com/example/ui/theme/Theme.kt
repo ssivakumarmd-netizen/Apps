@@ -24,13 +24,13 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF2563EB),
-    secondary = StockGreen,
-    tertiary = SoftAlertYellow,
-    background = Color(0xFFF9FAFB),
+    primary = HighDensityPrimary,
+    secondary = HighDensityPillTextGreen,
+    tertiary = HighDensityCardBg,
+    background = HighDensityBg,
     surface = Color.White,
-    onBackground = Color(0xFF111827),
-    onSurface = Color(0xFF111827),
+    onBackground = Color(0xFF0F172A),
+    onSurface = Color(0xFF0F172A),
     onPrimary = Color.White
 )
 
@@ -38,7 +38,7 @@ private val LightColorScheme = lightColorScheme(
 fun MyApplicationTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
   // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
   val colorScheme =
